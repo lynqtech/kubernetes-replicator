@@ -10,6 +10,6 @@ kind: ConfigMap
 metadata:
   name: config-source-replicate-to
   annotations:
-    replicator.v1.mittwald.de/replicate-to: some-namespace/config-target-to
+    replicator.v1.mittwald.de/replicate-to: some-namespace
 data:
   bar: foo

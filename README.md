@@ -112,10 +112,9 @@ When the labels of a namespace are changed, any resources that were replicated b
 It is possible to use both methods of push-based replication together in a single resource, by specifying both annotations.
 
 #### "push-based" is dangerous
-:warning: "push-based" setup is dangerous as it allows an actor to influence a cluster on sensitive resources with very high permissions. :warning:
+:warning: "push-based" setup is dangerous as it allows an actor to influence (read: overwrite) sensitive resources in a cluster. :warning:
 
 Please consider to only enable the features you actually need - see `values.yaml:replicationEnabled[]`.
-
 
 ### "Pull-based" replication
 

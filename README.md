@@ -17,6 +17,8 @@ secrets and config maps available in multiple namespaces.
         1. [1. Create the source secret](#step-1-create-the-source-secret)
         1. [2. Create empty secret](#step-2-create-an-empty-destination-secret)
         1. [Special case: TLS secrets](#special-case-tls-secrets)
+   1. [Special case: Service replication](#special-case-service-replication) 
+1. [Local development/testing](#local-developmenttesting-with-minikube) 
 
 ## Deployment
 
@@ -111,8 +113,8 @@ When the labels of a namespace are changed, any resources that were replicated b
 
 It is possible to use both methods of push-based replication together in a single resource, by specifying both annotations.
 
-#### "push-based" is dangerous
-:warning: "push-based" setup is dangerous as it allows an actor to influence (read: overwrite) sensitive resources in a cluster. :warning:
+#### :warning: "push-based" is dangerous
+:warning: "push-based" setup is dangerous as it allows an actor to influence (read: overwrite) sensitive resources in a cluster.
 
 Please consider to only enable the features you actually need - see `values.yaml:replicationEnabled[]`.
 

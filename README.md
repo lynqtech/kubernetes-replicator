@@ -111,6 +111,12 @@ When the labels of a namespace are changed, any resources that were replicated b
 
 It is possible to use both methods of push-based replication together in a single resource, by specifying both annotations.
 
+#### "push-based" is dangerous
+:warning: "push-based" setup is dangerous as it allows an actor to influence a cluster on sensitive resources with very high permissions. :warning:
+
+Please consider to only enable the features you actually need - see `values.yaml:replicationEnabled[]`.
+
+
 ### "Pull-based" replication
 
 Pull-based replication makes it possible to create a secret/configmap/role/rolebindings and select a "source" resource
@@ -241,3 +247,69 @@ data:
 ```
 
 See also: https://github.com/mittwald/kubernetes-replicator/issues/120
+
+### Special case: Service replication
+
+An annotated `kind: Service` will be replicated to another namespace as `type: ExternalName`. This feature allows to cover 2 use cases
+
+1) common DNS domain for services or a very lightweight service mesh
+2) migration of services into own namespaces while keeping their known DNS names
+
+
+This service
+ ```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: source-service
+  namespace: default
+  annotations:
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-path: /version
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    replicator.v1.mittwald.de/replicate-to: some-namespace
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: foo
+    application: foo
+```
+
+will be replicated to this
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: source-service
+  namespace: some-namespace
+  annotations:
+    replicator.v1.mittwald.de/replicated-at: "2024-08-21T09:07:45Z"
+    replicator.v1.mittwald.de/replicated-from-version: "680"
+spec:
+  type: ExternalName
+  externalName: source-service.default.svc.cluster.local.
+  sessionAffinity: None
+```
+
+Please note:
+- `metadata.annotations` are **not replicated** by default as on a `kind: service` they usually drive load-balancer operators. You can explicitly set `replicator.v1.mittwald.de/strip-annotations: "false"` to keep them.
+- there is only the `replicator.v1.mittwald.de/replicate-to` option implemented
+- pre-existing target `kind: Service` will happily be patched/overwritten ;-)
+
+## Local development/testing with minikube
+- start a minikube cluster
+  - `minikube start --kubernetes-version=latest`
+- build the image (adjust your platform)
+  - `minikube image build -t quay.io/mittwald/kubernetes-replicator:latest -f Dockerfile.buildx --build-env=TARGETPLATFORM=linux/amd64 --build-env=BUILDPLATFORM=linux/amd64 .`
+  - `minikube image ls`
+- deploy replicator
+  - `kubectl apply -f deploy/rbac.yaml`
+  - `kubectl apply -f deploy/deployment.yaml`
+  - `kubectl get pods -n kube-system`
+- deploy test sources
+  - `kubectl apply --kustomize test` 
+- happy replication!
